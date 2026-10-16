@@ -1,0 +1,61 @@
+{
+  "id": "ecommerce-price-intel",
+  "name": "E-Commerce Price & Stock Intelligence",
+  "description": "Real-time e-commerce product price, stock availability, Schema.org JSON-LD offer extraction & regional pricing intelligence via 4G/5G mobile proxies. $0.005/query via x402.",
+  "longDescription": "Extract live product pricing, stock availability (InStock / OutOfStock), currency, Schema.org Product JSON-LD structured offers, and OpenGraph metadata from global e-commerce stores using real 4G/5G mobile carrier and residential proxy failover. Designed for autonomous shopping agents, dynamic pricing monitors, MAP compliance bots, and competitive intelligence pipelines. Ultra-compressed (<15KB/req) payload with zero unpaid proxy byte leakage and on-chain USDC settlement verification on Solana and Base.",
+  "endpoint": "https://privacy-resolved-poem-installed.trycloudflare.com/api/ecommerce-intel",
+  "docsUrl": "https://privacy-resolved-poem-installed.trycloudflare.com/skill.md",
+  "pricing": {
+    "model": "per-request",
+    "amount": "0.005",
+    "minimum": "0.005",
+    "currency": "USDC",
+    "endpoints": {
+      "/api/ecommerce-intel": "0.005",
+      "/api/v1/ec-pricing": "0.008",
+      "/api/v1/serp-ai-overview": "0.005",
+      "/api/v1/gmaps-leads": "0.005",
+      "/api/v1/live-scrape": "0.005"
+    },
+    "networks": [
+      {
+        "network": "solana",
+        "chainId": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+        "recipient": "7UrQ6aZLfHpRpt42SnUXupfwTCmfsuWCcmKk5AC6tZVV",
+        "asset": "USDC",
+        "assetAddress": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+      },
+      {
+        "network": "base",
+        "chainId": "eip155:8453",
+        "recipient": "0x14aD5831D8767692D38e25aa0a8Fb48E2cD1Ba0E",
+        "asset": "USDC",
+        "assetAddress": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+      }
+    ]
+  },
+  "category": "scraper",
+  "tags": [
+    "ecommerce",
+    "price-monitoring",
+    "stock-tracker",
+    "product-intelligence",
+    "schema-org",
+    "mobile-proxy",
+    "scraper",
+    "x402"
+  ],
+  "owner": {
+    "name": "exantiv",
+    "github": "exantiv"
+  },
+  "status": "pending",
+  "featured": false,
+  "addedAt": "2026-10-16",
+  "updatedAt": "2026-10-16",
+  "x402": {
+    "discoveryUrl": "https://privacy-resolved-poem-installed.trycloudflare.com/api/ecommerce-intel",
+    "wellKnown": "https://privacy-resolved-poem-installed.trycloudflare.com/.well-known/x402.json"
+  },
+  "healthEndpoint": "https://privacy-resolved-poem-installed.trycloudflare.com/health"
+}

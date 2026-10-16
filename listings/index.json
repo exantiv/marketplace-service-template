@@ -143,6 +143,37 @@
       "status": "active",
       "featured": false,
       "detailsFile": "prediction-market-aggregator.json"
+    },
+    {
+      "id": "ecommerce-price-intel",
+      "name": "E-Commerce Price & Stock Intelligence",
+      "description": "Real-time e-commerce product price, stock availability, Schema.org JSON-LD offer extraction & regional pricing intelligence via 4G/5G mobile proxies. $0.005/query via x402.",
+      "endpoint": "https://privacy-resolved-poem-installed.trycloudflare.com/api/ecommerce-intel",
+      "docsUrl": "https://privacy-resolved-poem-installed.trycloudflare.com/skill.md",
+      "pricing": {
+        "model": "per-request",
+        "amount": "0.005",
+        "minimum": "0.005",
+        "currency": "USDC"
+      },
+      "category": "scraper",
+      "tags": [
+        "ecommerce",
+        "price-monitoring",
+        "stock-tracker",
+        "product-intelligence",
+        "schema-org",
+        "mobile-proxy",
+        "scraper",
+        "x402"
+      ],
+      "owner": {
+        "name": "exantiv",
+        "github": "exantiv"
+      },
+      "status": "pending",
+      "featured": false,
+      "detailsFile": "ecommerce-price-intel.json"
     }
   ],
   "networks": {

@@ -137,7 +137,7 @@ app.get('/', (c) => c.json({
       {
         network: 'solana',
         chainId: 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
-        recipient: '6eUdVwsPArTxwVqEARYGCh4S2qwW2zCs7jSEDRpxydnv',
+        recipient: process.env.WALLET_ADDRESS || '7UrQ6aZLfHpRpt42SnUXupfwTCmfsuWCcmKk5AC6tZVV',
         asset: 'USDC',
         assetAddress: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
         settlementTime: '~400ms',
@@ -145,7 +145,7 @@ app.get('/', (c) => c.json({
       {
         network: 'base',
         chainId: 'eip155:8453',
-        recipient: '0xF8cD900794245fc36CBE65be9afc23CDF5103042',
+        recipient: process.env.WALLET_ADDRESS_BASE || '0x14aD5831D8767692D38e25aa0a8Fb48E2cD1Ba0E',
         asset: 'USDC',
         assetAddress: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
         settlementTime: '~2s',
@@ -156,21 +156,38 @@ app.get('/', (c) => c.json({
   links: {
     marketplace: 'https://agents.proxies.sx/marketplace/',
     skillFile: 'https://agents.proxies.sx/marketplace/skill.md',
-    github: 'https://github.com/bolivian-peru/marketplace-service-template',
+    github: 'https://github.com/exantiv/marketplace-service-template',
   },
+}));
+
+app.get('/.well-known/x402.json', (c) => c.json({
+  x402Version: 1,
+  provider: process.env.SERVICE_NAME || 'ecommerce-price-intel',
+  wallets: {
+    solana: process.env.WALLET_ADDRESS || '7UrQ6aZLfHpRpt42SnUXupfwTCmfsuWCcmKk5AC6tZVV',
+    base: process.env.WALLET_ADDRESS_BASE || '0x14aD5831D8767692D38e25aa0a8Fb48E2cD1Ba0E',
+  },
+  endpoints: [
+    { path: '/api/ecommerce-intel', method: 'GET', priceUSDC: '0.005' },
+    { path: '/api/run', method: 'GET', priceUSDC: '0.005' },
+    { path: '/api/serp', method: 'GET', priceUSDC: '0.003' },
+    { path: '/api/jobs', method: 'GET', priceUSDC: '0.005' },
+  ],
 }));
 
 app.route('/api', serviceRouter);
 
-app.notFound((c) => c.json({ error: 'Not found', endpoints: ['/', '/health', '/api/run', '/api/details', '/api/serp', '/api/jobs', '/api/reviews/search', '/api/reviews/:place_id', '/api/business/:place_id', '/api/reviews/summary/:place_id', '/api/linkedin/person', '/api/linkedin/company', '/api/linkedin/search/people', '/api/reddit/search', '/api/reddit/trending', '/api/reddit/subreddit/:name', '/api/reddit/thread/*', '/api/instagram/profile/:username', '/api/instagram/posts/:username', '/api/instagram/analyze/:username', '/api/instagram/audit/:username', '/api/airbnb/search', '/api/airbnb/listing/:id', '/api/airbnb/reviews/:listing_id', '/api/airbnb/market-stats', '/api/research', '/api/trending'] }, 404));
+app.notFound((c) => c.json({ error: 'Not found', endpoints: ['/', '/health', '/.well-known/x402.json', '/api/ecommerce-intel', '/api/run', '/api/details', '/api/serp', '/api/jobs', '/api/reviews/search', '/api/reviews/:place_id', '/api/business/:place_id', '/api/reviews/summary/:place_id', '/api/linkedin/person', '/api/linkedin/company', '/api/linkedin/search/people', '/api/reddit/search', '/api/reddit/trending', '/api/reddit/subreddit/:name', '/api/reddit/thread/*', '/api/instagram/profile/:username', '/api/instagram/posts/:username', '/api/instagram/analyze/:username', '/api/instagram/audit/:username', '/api/airbnb/search', '/api/airbnb/listing/:id', '/api/airbnb/reviews/:listing_id', '/api/airbnb/market-stats', '/api/research', '/api/trending'] }, 404));
 
 app.onError((err, c) => {
   console.error(`[ERROR] ${err.message}`);
   return c.json({ error: 'Internal server error' }, 500);
 });
 
+export { app };
+
 export default {
-  port: parseInt(process.env.PORT || '3000'),
+  port: parseInt(process.env.PORT || '3405'),
   hostname: '0.0.0.0',
   fetch: app.fetch,
 };

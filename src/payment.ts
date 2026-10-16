@@ -83,9 +83,11 @@ export async function verifyPayment(
   }
 
   try {
+    const baseRecipient =
+      process.env.WALLET_ADDRESS_BASE || '0x14aD5831D8767692D38e25aa0a8Fb48E2cD1Ba0E';
     const result = payment.network === 'solana'
       ? await verifySolana(payment.txHash, expectedRecipient, expectedAmountUSDC, tolerancePercent)
-      : await verifyBase(payment.txHash, expectedRecipient, expectedAmountUSDC, tolerancePercent);
+      : await verifyBase(payment.txHash, baseRecipient, expectedAmountUSDC, tolerancePercent);
 
     if (result.valid) {
       verifiedTxHashes.add(payment.txHash);
@@ -128,7 +130,7 @@ export function build402Response(
       {
         network: 'base',
         chainId: 'eip155:8453',
-        recipient: process.env.WALLET_ADDRESS_BASE || '0xF8cD900794245fc36CBE65be9afc23CDF5103042',
+        recipient: process.env.WALLET_ADDRESS_BASE || '0x14aD5831D8767692D38e25aa0a8Fb48E2cD1Ba0E',
         asset: 'USDC',
         assetAddress: USDC_BASE,
       },

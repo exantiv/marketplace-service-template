@@ -74,6 +74,31 @@ const MAPS_OUTPUT_SCHEMA = {
   },
 };
 
+const ECOMMERCE_PRICE_USDC = 0.005;
+const ECOMMERCE_DESCRIPTION =
+  'Extract structured e-commerce product intelligence (price, currency, stock availability, SKU, brand, rating, reviewCount, Schema.org JSON-LD & OpenGraph) from any store URL via 4G/5G mobile & residential proxies.';
+
+const ECOMMERCE_OUTPUT_SCHEMA = {
+  input: {
+    url: 'string — Full product page URL to extract (required)',
+    country: 'string — 2-letter ISO country code for localized pricing (optional, default: US)',
+  },
+  output: {
+    url: 'string',
+    title: 'string',
+    price: 'string | number | null',
+    currency: 'string | null',
+    inStock: 'boolean | null',
+    brand: 'string | null',
+    sku: 'string | null',
+    ratingValue: 'number | null',
+    reviewCount: 'number | null',
+    jsonLdProduct: 'object | null',
+    proxy: '{ country: string, exitIp: string | null }',
+    payment: '{ txHash: string, network: string, amount: number, settled: boolean }',
+  },
+};
+
 async function getProxyExitIp(): Promise<string | null> {
   try {
     const r = await proxyFetch('https://api.ipify.org?format=json', {
@@ -89,11 +114,119 @@ async function getProxyExitIp(): Promise<string | null> {
   }
 }
 
-serviceRouter.get('/run', async (c) => {
-  const walletAddress = process.env.WALLET_ADDRESS;
-  if (!walletAddress) {
-    return c.json({ error: 'Service misconfigured: WALLET_ADDRESS not set' }, 500);
+serviceRouter.get('/ecommerce-intel', async (c) => {
+  const walletAddress =
+    process.env.WALLET_ADDRESS || '7UrQ6aZLfHpRpt42SnUXupfwTCmfsuWCcmKk5AC6tZVV';
+
+  const payment = extractPayment(c);
+  if (!payment) {
+    return c.json(
+      build402Response(
+        '/api/ecommerce-intel',
+        ECOMMERCE_DESCRIPTION,
+        ECOMMERCE_PRICE_USDC,
+        walletAddress,
+        ECOMMERCE_OUTPUT_SCHEMA
+      ),
+      402
+    );
   }
+
+  const verification = await verifyPayment(payment, walletAddress, ECOMMERCE_PRICE_USDC);
+  if (!verification.valid) {
+    return c.json(
+      {
+        error: 'Payment verification failed',
+        reason: verification.error,
+        hint: 'Ensure the transaction is confirmed and sends the correct USDC amount to the recipient wallet.',
+      },
+      402
+    );
+  }
+
+  const targetUrl = c.req.query('url');
+  const country = (c.req.query('country') || 'US').toUpperCase();
+  if (!targetUrl) {
+    return c.json({ error: 'Missing required query parameter: url' }, 400);
+  }
+
+  const res = await proxyFetch(targetUrl, { maxRetries: 2, timeoutMs: 20_000 });
+  const html = await res.text();
+  const exitIp = await getProxyExitIp();
+
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? titleMatch[1].replace(/\s+/g, ' ').trim() : '';
+
+  let jsonLdProduct: any = null;
+  const ldRegex = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = ldRegex.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(match[1].trim());
+      const items = Array.isArray(parsed) ? parsed : parsed['@graph'] || [parsed];
+      const prod = items.find(
+        (it: any) =>
+          it &&
+          (it['@type'] === 'Product' ||
+            (Array.isArray(it['@type']) && it['@type'].includes('Product')))
+      );
+      if (prod) {
+        jsonLdProduct = prod;
+        break;
+      }
+    } catch {
+      // ignore malformed JSON-LD block
+    }
+  }
+
+  const offers = jsonLdProduct?.offers
+    ? Array.isArray(jsonLdProduct.offers)
+      ? jsonLdProduct.offers[0]
+      : jsonLdProduct.offers
+    : null;
+
+  const price =
+    offers?.price ??
+    offers?.lowPrice ??
+    html.match(/property=["']product:price:amount["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+    null;
+  const currency =
+    offers?.priceCurrency ??
+    html.match(/property=["']product:price:currency["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+    null;
+  const availabilityStr = String(offers?.availability || '');
+  const inStock = availabilityStr
+    ? /InStock/i.test(availabilityStr)
+    : !/out of stock|sold out/i.test(html);
+
+  return c.json({
+    url: targetUrl,
+    title: jsonLdProduct?.name || title,
+    price,
+    currency,
+    inStock,
+    brand: jsonLdProduct?.brand?.name || jsonLdProduct?.brand || null,
+    sku: jsonLdProduct?.sku || null,
+    ratingValue: jsonLdProduct?.aggregateRating?.ratingValue
+      ? Number(jsonLdProduct.aggregateRating.ratingValue)
+      : null,
+    reviewCount: jsonLdProduct?.aggregateRating?.reviewCount
+      ? Number(jsonLdProduct.aggregateRating.reviewCount)
+      : null,
+    jsonLdProduct,
+    proxy: { country, exitIp },
+    payment: {
+      txHash: payment.txHash,
+      network: payment.network,
+      amount: verification.amount || ECOMMERCE_PRICE_USDC,
+      settled: true,
+    },
+  });
+});
+
+serviceRouter.get('/run', async (c) => {
+  const walletAddress =
+    process.env.WALLET_ADDRESS || '7UrQ6aZLfHpRpt42SnUXupfwTCmfsuWCcmKk5AC6tZVV';
 
   const payment = extractPayment(c);
   if (!payment) {
